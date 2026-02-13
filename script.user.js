@@ -6,7 +6,7 @@
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
-// @version      5.5
+// @version      5.6
 // @author       Iascripts71
 // @description  Panel con leyenda personalizable, colores y parpadeo. Con sistema de actualización opcional.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/script.user.js
@@ -16,7 +16,7 @@
 (function() {
     'use strict';
 
-    const SCRIPT_VERSION = "5.5";
+    const SCRIPT_VERSION = "5.6";
     const UPDATE_URL = "https://raw.githubusercontent.com/Iascripts71/Scripts/main/script.user.js";
 
     // 1. Estilos CSS
@@ -34,6 +34,7 @@
             #crg-settings-panel th { text-align: left; font-size: 11px; color: #888; text-transform: uppercase; padding-bottom: 5px; }
             .crg-input-text { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 6px; font-size: 12px; box-sizing: border-box; }
             .update-banner { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; display: none; border: 1px solid #ffeeba; text-align: center; }
+            .crg-info-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f9f9f9; border: 1px solid #999; padding: 20px; z-index: 10001; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border-radius: 12px; width: 400px; font-size: 13px; line-height: 1.5; color: #444; }
         `;
         document.head.appendChild(style);
     };
@@ -57,7 +58,6 @@
         return `rgba(${r}, ${g}, ${b}, 0.25)`;
     };
 
-    // FUNCIÓN PARA BUSCAR ACTUALIZACIÓN
     const checkUpdate = (callback) => {
         GM_xmlhttpRequest({
             method: "GET",
@@ -111,15 +111,37 @@
                 </thead>
                 <tbody>${rowsHtml}</tbody>
             </table>
-            <div style="margin-top:25px; text-align:right;">
-                <button id="crg-btn-cancel" style="background:none; border:none; color:#888; cursor:pointer; padding:5px 15px;">Cancelar</button>
-                <button id="crg-btn-save" style="background:#0050ff; color:white; border:none; padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:bold; margin-left:10px;">Guardar Cambios</button>
+            <div style="margin-top:25px; display:flex; justify-content:space-between; align-items:center;">
+                <button id="crg-btn-info" style="background:#eee; border:none; color:#555; padding:8px 15px; border-radius:8px; cursor:pointer; font-size:12px;">ℹ️ Información</button>
+                <div>
+                    <button id="crg-btn-cancel" style="background:none; border:none; color:#888; cursor:pointer; padding:5px 15px;">Cancelar</button>
+                    <button id="crg-btn-save" style="background:#0050ff; color:white; border:none; padding:10px 25px; border-radius:10px; cursor:pointer; font-weight:bold; margin-left:10px;">Guardar Cambios</button>
+                </div>
             </div>
         `;
 
         document.body.appendChild(panel);
 
-        // Comprobar si hay versión nueva al abrir
+        // Lógica del botón Información
+        document.getElementById('crg-btn-info').onclick = () => {
+            const info = document.createElement('div');
+            info.className = 'crg-info-modal';
+            info.innerHTML = `
+                <h4 style="margin-top:0; color:#0050ff;">¿Cómo funciona este script?</h4>
+                <p>Este gestor resalta con un "sombreado de color" los enlaces de los cómics en el foro basándose en el "Estatus" que tengan asignado en la Mansión-CRG.</p>
+                <ul>
+                    <li><b>Color:</b> Elige el color de fondo para cada estado (0 al 4).</li>
+                    <li><b>Significado:</b> Etiquetas personales para recordar qué representa cada estatus para ti.</li>
+
+                    <li><b>Blink:</b> Haz que los enlaces parpadeen para destacar estados importantes.</li>
+                </ul>
+                <p style="font-size:11px; color:#888;">Los cambios se aplican al recargar la página del foro.</p>
+                <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; margin-top:10px;">Entendido</button>
+            `;
+            document.body.appendChild(info);
+            document.getElementById('crg-info-close').onclick = () => info.remove();
+        };
+
         checkUpdate((v) => {
             document.getElementById('crg-update-info').style.display = 'block';
         });
@@ -139,7 +161,6 @@
 
     GM_registerMenuCommand('🎨 Gestionar mi Sistema de Colores', showPanel);
 
-    // 4. Aplicar estilos
     const aplicarEstilos = () => {
         if (!GM_getValue('enabled', defaults.enabled)) return;
 
@@ -172,6 +193,5 @@
     setTimeout(aplicarEstilos, 600);
     const observer = new MutationObserver(aplicarEstilos);
     observer.observe(document.body, { childList: true, subtree: true });
-
 
 })();
