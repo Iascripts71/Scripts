@@ -5,15 +5,28 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @version      0.4
+// @grant        GM_addStyle
+// @version      0.6
 // @author       Iascripts71
-// @description  Copia de seguridad remota con el diseño exacto del gestor de colección.
+// @description  Copia de seguridad remota con el diseño EXACTO del gestor de colección.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // @downloadURL  https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // ==/UserScript==
 
 (function() {
     'use strict';
+
+    // Inyectamos los estilos exactos del otro script para que la clase modal funcione
+    GM_addStyle(`
+        .crg-info-modal {
+            position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0);
+            background: #1a1a1a; color: white; padding: 25px; z-index: 30000;
+            border-radius: 15px; border: 2px solid #0050ff; width: 320px;
+            font-family: sans-serif; text-align: left; box-shadow: 0 0 20px rgba(0,80,255,0.5);
+        }
+        .crg-info-modal ul { font-size: 13px; padding-left: 20px; color: #ccc; margin: 10px 0; }
+        .crg-info-modal li { margin-bottom: 5px; }
+    `);
 
     const generarNombreArchivo = () => {
         let subforo = "crg-lista", idLista = "00000";
@@ -27,26 +40,6 @@
         return `${subforo}-${idLista}-${fecha}_${hora}.csv`;
     };
 
-    // FUNCIÓN DE INFORMACIÓN (Copiada exactamente de tu otro script)
-    const mostrarInfo = () => {
-        const infoDiv = document.createElement('div');
-        infoDiv.style = "position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); background: #1a1a1a; color: white; padding: 25px; z-index: 30000; border-radius: 15px; border: 2px solid #0050ff; width: 320px; font-family: sans-serif; text-align: left; box-shadow: 0 0 20px rgba(0,80,255,0.5);";
-        infoDiv.innerHTML = `
-            <h3 style="margin-top: 0; color: #0050ff; border-bottom: 1px solid #333; padding-bottom: 10px;">ℹ️ Información</h3>
-            <p style="font-size: 14px; line-height: 1.6;">Este script permite realizar copias de seguridad de tus estados personalizados en la nube.</p>
-            <ul style="font-size: 13px; padding-left: 20px; color: #ccc;">
-                <li>Usa <b>KVstore.io</b> para el almacenamiento.</li>
-                <li>Introduce tu <b>Store Name</b> en Usuario.</li>
-                <li>Introduce tu <b>API Key</b> en Contraseña.</li>
-                <li><b>Guardar:</b> Sube tus datos actuales.</li>
-                <li><b>Recuperar:</b> Restaura tu última copia.</li>
-            </ul>
-            <button id="close-info" style="width: 100%; background: #0050ff; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px;">ENTENDIDO</button>
-        `;
-        document.body.appendChild(infoDiv);
-        document.getElementById('close-info').onclick = () => infoDiv.remove();
-    };
-
     const showCloudPanel = () => {
         if (document.getElementById('cloud-panel-crg')) return;
         const panel = document.createElement('div');
@@ -54,18 +47,18 @@
         panel.style = "position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); background: #f4f7f6; border: 2px solid #0050ff; padding: 25px; z-index: 20000; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius: 15px; font-family: sans-serif; width: 340px; color: #333;";
         
         panel.innerHTML = `
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="margin:0; color:#0050ff;">☁️ Mi Nube CRG</h3>
-                <button id="btn-info-cloud" style="background: #1a1a1a; color: #0050ff; border: 1px solid #0050ff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">ℹ️</button>
+                <button id="crg-btn-info" style="background: #1a1a1a; color: #0050ff; border: 2px solid #0050ff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">ℹ️</button>
             </div>
             
             <div style="margin-bottom:10px;">
                 <label style="font-size:11px; font-weight:bold;">KVSTORE USER (Store Name):</label>
-                <input type="text" id="cloud-user" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;" value="${GM_getValue('cloud_user', '')}">
+                <input type="text" id="cloud-user" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_user', '')}">
             </div>
             <div style="margin-bottom:15px;">
                 <label style="font-size:11px; font-weight:bold;">API KEY (Contraseña):</label>
-                <input type="password" id="cloud-pass" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;" value="${GM_getValue('cloud_pass', '')}">
+                <input type="password" id="cloud-pass" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_pass', '')}">
             </div>
             
             <div style="background:#e9ecef; padding:10px; border-radius:8px; margin-bottom:15px; font-size:10px; border: 1px dashed #adb5bd;">
@@ -84,8 +77,25 @@
         `;
         document.body.appendChild(panel);
 
-        document.getElementById('btn-info-cloud').onclick = mostrarInfo;
-        
+        // Lógica del botón Información (BASADA EN TU CÓDIGO)
+        document.getElementById('crg-btn-info').onclick = () => {
+            const info = document.createElement('div');
+            info.className = 'crg-info-modal';
+            info.innerHTML = `
+                <h4 style="margin-top:0; color:#0050ff;">¿Cómo funciona la nube?</h4>
+                <p>Este script permite guardar tus colores y notas para no perderlos si borras el historial o cambias de PC.</p>
+                <ul>
+                    <li><b>KVstore:</b> Almacenamiento gratuito para tus datos.</li>
+                    <li><b>Guardar:</b> Sube tus marcas actuales a internet.</li>
+                    <li><b>Recuperar:</b> Descarga tus marcas guardadas en este PC.</li>
+                </ul>
+                <p style="font-size:11px; color:#888;">Crea tu cuenta gratis en el enlace del panel principal.</p>
+                <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; margin-top:10px;">Entendido</button>
+            `;
+            document.body.appendChild(info);
+            document.getElementById('crg-info-close').onclick = () => info.remove();
+        };
+
         document.getElementById('btn-up').onclick = () => {
             const user = document.getElementById('cloud-user').value;
             const pass = document.getElementById('cloud-pass').value;
