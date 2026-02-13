@@ -5,9 +5,9 @@
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
-// @version      0.2
+// @version      0.3
 // @author       Iascripts71
-// @description  Copia de seguridad remota con diseño unificado y ayuda.
+// @description  Copia de seguridad remota con diseño idéntico al gestor de colección.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // @downloadURL  https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // ==/UserScript==
@@ -27,20 +27,20 @@
         return `${subforo}-${idLista}-${fecha}_${hora}.csv`;
     };
 
+    // VENTANA DE INFORMACIÓN (Idéntica al otro script)
     const mostrarInfoCloud = () => {
         const infoDiv = document.createElement('div');
         infoDiv.style = "position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); background: #1a1a1a; color: white; padding: 25px; z-index: 30000; border-radius: 15px; border: 2px solid #0050ff; width: 320px; font-family: sans-serif; text-align: left; box-shadow: 0 0 20px rgba(0,80,255,0.5);";
         infoDiv.innerHTML = `
-            <h3 style="margin-top:0; color:#0050ff; border-bottom:1px solid #333; padding-bottom:10px;">ℹ️ Guía de la Nube</h3>
-            <p style="font-size:13px; line-height:1.5;">Este script asegura tus datos para que nunca pierdas tus cómics marcados.</p>
-            <ul style="font-size:12px; padding-left:20px; color:#ccc;">
-                <li><b>Paso 1:</b> Crea cuenta en KVstore.io (gratis).</li>
-                <li><b>Paso 2:</b> Pon el nombre de tu 'Store' en Usuario.</li>
-                <li><b>Paso 3:</b> Pon tu 'API Key' en Contraseña.</li>
-                <li><b>Guardar:</b> Sube tus marcas actuales a la nube.</li>
-                <li><b>Recuperar:</b> Baja tus marcas a este navegador.</li>
-            </ul>
-            <button id="close-info-cloud" style="width:100%; background:#0050ff; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:10px;">ENTENDIDO</button>
+            <h3 style="margin-top:0; color:#0050ff; border-bottom:1px solid #333; padding-bottom:10px; display:flex; align-items:center; gap:10px;">ℹ️ Información</h3>
+            <p style="font-size:13px; line-height:1.5; color:#eee;">Este script permite guardar tus estados personalizados en la nube para no perderlos nunca.</p>
+            <div style="background:#222; padding:10px; border-radius:8px; font-size:12px; color:#ccc; border-left:3px solid #0050ff;">
+                1. Regístrate en KVstore.io<br>
+                2. Copia tu 'Store Name' en Usuario.<br>
+                3. Copia tu 'API Key' en Contraseña.<br>
+                4. Usa GUARDAR para subir tus datos.
+            </div>
+            <button id="close-info-cloud" style="width:100%; background:#0050ff; color:white; border:none; padding:10px; border-radius:8px; cursor:pointer; font-weight:bold; margin-top:15px; transition:0.3s;">ENTENDIDO</button>
         `;
         document.body.appendChild(infoDiv);
         document.getElementById('close-info-cloud').onclick = () => infoDiv.remove();
@@ -53,33 +53,33 @@
         panel.style = "position: fixed; top: 15%; left: 50%; transform: translate(-50%, 0); background: #f4f7f6; border: 2px solid #0050ff; padding: 25px; z-index: 20000; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border-radius: 15px; font-family: sans-serif; width: 340px; color: #333;";
         
         panel.innerHTML = `
-            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin:0; color:#0050ff;">☁️ Mi Nube CRG v0.2</h3>
-                <button id="btn-info-cloud" style="background:#1a1a1a; color:#0050ff; border:1px solid #0050ff; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; font-size:16px; display:flex; align-items:center; justify-content:center;">ℹ️</button>
+            <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+                <h3 style="margin:0; color:#0050ff; font-size:18px;">☁️ Nube CRG</h3>
+                <button id="btn-info-cloud" style="background:#1a1a1a; color:#0050ff; border:1px solid #0050ff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-weight:bold; font-size:14px; display:flex; align-items:center; justify-content:center;">ℹ️</button>
             </div>
             
             <div style="margin-bottom:10px;">
-                <label style="font-size:11px; font-weight:bold;">KVSTORE USER (Store Name):</label>
-                <input type="text" id="cloud-user" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;" value="${GM_getValue('cloud_user', '')}">
+                <label style="font-size:11px; font-weight:bold; color:#555;">KVSTORE USER:</label>
+                <input type="text" id="cloud-user" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_user', '')}">
             </div>
             <div style="margin-bottom:15px;">
-                <label style="font-size:11px; font-weight:bold;">API KEY (Contraseña):</label>
-                <input type="password" id="cloud-pass" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc;" value="${GM_getValue('cloud_pass', '')}">
+                <label style="font-size:11px; font-weight:bold; color:#555;">API KEY:</label>
+                <input type="password" id="cloud-pass" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_pass', '')}">
             </div>
             
-            <div style="background:#e9ecef; padding:10px; border-radius:8px; margin-bottom:15px; font-size:10px; border: 1px dashed #adb5bd;">
-                <b>Archivo generado:</b><br><span style="color:#0050ff;">${generarNombreArchivo()}</span>
+            <div style="background:#e9ecef; padding:10px; border-radius:8px; margin-bottom:15px; font-size:10px; border: 1px dashed #adb5bd; color:#666;">
+                <b>Archivo:</b> <span style="color:#0050ff;">${generarNombreArchivo()}</span>
             </div>
 
-            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 GUARDAR EN LA NUBE</button>
-            <button id="btn-down" style="width:100%; background:#007bff; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">📥 RECUPERAR DE LA NUBE</button>
+            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📤 GUARDAR EN LA NUBE</button>
+            <button id="btn-down" style="width:100%; background:#007bff; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">📥 RECUPERAR DE LA NUBE</button>
             
             <div id="cloud-msg" style="margin-top:15px; font-size:12px; text-align:center; font-weight:bold; min-height:15px;"></div>
             
             <div style="text-align:center; margin-top:15px; border-top: 1px solid #ddd; padding-top: 10px;">
                 <a href="https://www.kvstore.io/signup" target="_blank" style="font-size:12px; color:#0050ff; text-decoration:none; font-weight:bold;">👉 Crear cuenta en KVstore.io</a>
             </div>
-            <p id="cloud-close" style="text-align:center; margin-top:10px; color:#888; cursor:pointer; font-size:12px; margin-bottom:0;">Cerrar ventana</p>
+            <p id="cloud-close" style="text-align:center; margin-top:10px; color:#888; cursor:pointer; font-size:12px; margin-bottom:0; hover:color:#333;">Cerrar ventana</p>
         `;
         document.body.appendChild(panel);
 
