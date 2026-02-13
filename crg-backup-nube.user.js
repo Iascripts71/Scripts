@@ -6,9 +6,9 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @version      0.13
+// @version      0.16
 // @author       Iascripts71
-// @description  Backup en Dropbox con instrucciones para Token permanente.
+// @description  Backup en Dropbox compatible con tokens de larga duración.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // @downloadURL  https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // ==/UserScript==
@@ -18,17 +18,15 @@
 
     GM_addStyle(`
         .crg-info-modal {
-            position: fixed; top: 8%; left: 50%; transform: translate(-50%, 0);
+            position: fixed; top: 10%; left: 50%; transform: translate(-50%, 0);
             background: #1a1a1a; color: white; padding: 25px; z-index: 30000;
             border-radius: 15px; border: 2px solid #0050ff; width: 400px;
             font-family: sans-serif; text-align: left; box-shadow: 0 0 25px rgba(0,80,255,0.6);
-            max-height: 85vh; overflow-y: auto;
         }
-        .crg-info-modal h4 { margin-top:0; color:#0050ff; font-size:18px; border-bottom: 1px solid #333; padding-bottom:10px; }
-        .crg-info-modal p { font-size:13px; line-height: 1.5; margin: 8px 0; }
-        .crg-info-modal ol { font-size: 12px; padding-left: 20px; color: #ccc; }
-        .crg-info-modal li { margin-bottom: 10px; }
+        .crg-info-modal h4 { margin:0 0 10px 0; color:#0050ff; border-bottom: 1px solid #333; padding-bottom:10px; }
+        .crg-info-modal p { font-size:13px; line-height: 1.5; }
         .crg-info-modal b { color: #0050ff; }
+        .db-help-step { background:#222; border-left: 3px solid #0050ff; padding:8px; margin:10px 0; font-size:12px; }
         
         #crg-btn-info {
             background: #1a1a1a; color: #0050ff !important; border: 2px solid #0050ff;
@@ -45,24 +43,21 @@
         
         panel.innerHTML = `
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin:0; color:#0050ff;">☁️ Backup Dropbox CRG</h3>
+                <h3 style="margin:0; color:#0050ff;">☁️ Nube Dropbox CRG</h3>
                 <button id="crg-btn-info">ℹ️</button>
             </div>
             
             <div style="margin-bottom:15px;">
-                <label style="font-size:11px; font-weight:bold;">DROPBOX ACCESS TOKEN:</label>
-                <input type="password" id="db-token" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('db_token', '')}" placeholder="Pega el Access Token permanente">
+                <label style="font-size:11px; font-weight:bold;">TOKEN DE ACCESO:</label>
+                <textarea id="db-token" style="width:100%; height:80px; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box; font-size:10px; font-family:monospace; resize:none;">${GM_getValue('db_token', '')}</textarea>
             </div>
 
-            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 GUARDAR EN DROPBOX</button>
-            <button id="btn-down" style="width:100%; background:#007bff; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">📥 RECUPERAR DE DROPBOX</button>
+            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 SUBIR BACKUP (20MB+)</button>
+            <button id="btn-down" style="width:100%; background:#007bff; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">📥 DESCARGAR BACKUP</button>
             
             <div id="cloud-msg" style="margin-top:15px; font-size:12px; text-align:center; font-weight:bold; min-height:15px;"></div>
             
-            <div style="text-align:center; margin-top:15px; border-top: 1px solid #ddd; padding-top: 10px;">
-                <a href="https://www.dropbox.com/developers/apps" target="_blank" style="font-size:12px; color:#0050ff; text-decoration:none; font-weight:bold;">🔑 Consola de Apps Dropbox</a>
-            </div>
-            <p id="cloud-close" style="text-align:center; margin-top:10px; color:#888; cursor:pointer; font-size:12px; margin-bottom:0;">Cerrar ventana</p>
+            <p id="cloud-close" style="text-align:center; margin-top:15px; color:#888; cursor:pointer; font-size:12px; margin-bottom:0; text-decoration:underline;">Cerrar panel</p>
         `;
         document.body.appendChild(panel);
 
@@ -70,27 +65,27 @@
             const info = document.createElement('div');
             info.className = 'crg-info-modal';
             info.innerHTML = `
-                <h4>Instrucciones para el Usuario</h4>
-                <p>Para tener un backup infinito y gratuito, sigue estos pasos:</p>
-                <ol>
-                    <li>Entra en <b>Consola de Apps</b> y pulsa en <b>Create App</b>.</li>
-                    <li>Selecciona <b>Scoped API</b> y <b>App Folder</b>. Ponle un nombre cualquiera.</li>
-                    <li>En la pestaña <b>Permissions</b>, marca <b>files.content.write</b> y <b>files.content.read</b>. Dale a "Submit".</li>
-                    <li>En la pestaña <b>Settings</b>, busca <b>Access token expiration</b> y cámbialo a <b>No expiration</b>.</li>
-                    <li>Dale al botón <b>Generate</b>, copia ese código largo y pégalo aquí.</li>
-                </ol>
-                <p style="background:#222; padding:10px; border-radius:5px; font-size:11px; color:#aaa; border: 1px solid #444;">
-                   <b>¿Por qué Dropbox?</b> Permite archivos de hasta 20MB (o más) sin borrar tus datos nunca.
-                </p>
-                <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; margin-top:10px; font-weight:bold;">ENTENDIDO</button>
+                <h4>Guía para el Token</h4>
+                <p>Dropbox da error si el token no tiene permisos configurados.</p>
+                <div class="db-help-step">
+                    1. En la web de Dropbox, ve a <b>Permissions</b> y activa <b>files.content.write</b>. Pulsa <b>Submit</b>.
+                </div>
+                <div class="db-help-step">
+                    2. En <b>Settings</b>, pon <b>Access token expiration</b> en <b>No expiration</b>.
+                </div>
+                <div class="db-help-step">
+                    3. Pulsa el botón <b>Generate</b>. Copia ese código (aunque sea muy largo) y pégalo aquí.
+                </div>
+                <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">ENTENDIDO</button>
             `;
             document.body.appendChild(info);
             document.getElementById('crg-info-close').onclick = () => info.remove();
         };
 
+        // ACCIÓN: SUBIR
         document.getElementById('btn-up').onclick = () => {
-            const token = document.getElementById('db-token').value;
-            if(!token) return alert("Pega el token de Dropbox.");
+            const token = document.getElementById('db-token').value.trim();
+            if(!token) return alert("Pega el token primero.");
             GM_setValue('db_token', token);
             
             let datos = {};
@@ -99,7 +94,7 @@
                 if (k.startsWith('lm_') || k.includes('status')) datos[k] = localStorage.getItem(k);
             }
 
-            document.getElementById('cloud-msg').innerText = "Subiendo archivo...";
+            document.getElementById('cloud-msg').innerText = "Conectando con Dropbox...";
             GM_xmlhttpRequest({
                 method: "POST",
                 url: "https://content.dropboxapi.com/2/files/upload",
@@ -111,36 +106,34 @@
                 data: JSON.stringify(datos),
                 onload: (r) => {
                     if (r.status === 200) {
-                        document.getElementById('cloud-msg').innerText = "✅ Guardado en tu Dropbox";
+                        document.getElementById('cloud-msg').innerText = "✅ ¡Backup guardado!";
                         document.getElementById('cloud-msg').style.color = "green";
                     } else {
-                        document.getElementById('cloud-msg').innerText = "❌ Error: Revisa Permisos o Expiración";
+                        document.getElementById('cloud-msg').innerText = "❌ Error de permisos o Token";
                         document.getElementById('cloud-msg').style.color = "red";
+                        console.error("Respuesta Dropbox:", r.responseText);
                     }
                 }
             });
         };
 
+        // ACCIÓN: DESCARGAR
         document.getElementById('btn-down').onclick = () => {
-            const token = document.getElementById('db-token').value;
+            const token = document.getElementById('db-token').value.trim();
             if(!token) return alert("Pega el token.");
-            
-            document.getElementById('cloud-msg').innerText = "Recuperando...";
+            document.getElementById('cloud-msg').innerText = "Descargando...";
             GM_xmlhttpRequest({
                 method: "POST",
                 url: "https://content.dropboxapi.com/2/files/download",
-                headers: {
-                    "Authorization": "Bearer " + token,
-                    "Dropbox-API-Arg": JSON.stringify({ "path": "/backup_crg.json" })
-                },
+                headers: { "Authorization": "Bearer " + token, "Dropbox-API-Arg": JSON.stringify({ "path": "/backup_crg.json" }) },
                 onload: (r) => {
                     if(r.status === 200) {
                         const d = JSON.parse(r.responseText);
                         Object.keys(d).forEach(k => localStorage.setItem(k, d[k]));
-                        alert("✅ Restaurado. Se recargará la página.");
+                        alert("✅ Datos recuperados. Recargando página...");
                         location.reload();
                     } else {
-                        alert("❌ No se encontró el backup o el token es inválido.");
+                        alert("❌ No se encontró el archivo. ¿Has subido alguno antes?");
                     }
                 }
             });
