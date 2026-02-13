@@ -33,7 +33,7 @@
             #crg-settings-panel td { padding: 6px 4px; border-bottom: 1px solid #eee; vertical-align: middle; }
             #crg-settings-panel th { text-align: left; font-size: 11px; color: #888; text-transform: uppercase; padding-bottom: 5px; }
             .crg-input-text { width: 100%; border: 1px solid #ddd; border-radius: 4px; padding: 6px; font-size: 12px; box-sizing: border-box; }
-            .update-banner { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; display: none; border: 1px solid #ffeeba; }
+            .update-banner { background: #fff3cd; color: #856404; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-size: 12px; display: none; border: 1px solid #ffeeba; text-align: center; }
         `;
         document.head.appendChild(style);
     };
@@ -62,6 +62,7 @@
         GM_xmlhttpRequest({
             method: "GET",
             url: UPDATE_URL,
+            nocache: true,
             onload: (response) => {
                 const match = response.responseText.match(/@version\s+([\d.]+)/);
                 if (match && match[1] !== SCRIPT_VERSION) {
@@ -94,7 +95,7 @@
 
         panel.innerHTML = `
             <div id="crg-update-info" class="update-banner">
-                🚀 ¡Nueva versión disponible! <a id="crg-do-update" href="${UPDATE_URL}" target="_blank" style="font-weight:bold; color:#856404; text-decoration:underline; cursor:pointer;">Instalar ahora</a>
+                🚀 ¡Nueva versión disponible! <a href="${UPDATE_URL}" target="_blank" style="font-weight:bold; color:#856404; text-decoration:underline;">Instalar actualización</a>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                 <h3 style="margin: 0; color: #0050ff;">Gestión de Colección CRG</h3>
@@ -118,10 +119,9 @@
 
         document.body.appendChild(panel);
 
-        // Verificar si hay actualizaciones al abrir el panel
-        checkUpdate((nuevaVersio) => {
-            const banner = document.getElementById('crg-update-info');
-            banner.style.display = 'block';
+        // Comprobar si hay versión nueva al abrir
+        checkUpdate((v) => {
+            document.getElementById('crg-update-info').style.display = 'block';
         });
 
         document.getElementById('crg-btn-cancel').onclick = () => panel.remove();
