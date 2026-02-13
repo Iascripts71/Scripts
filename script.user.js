@@ -17,7 +17,7 @@
     'use strict';
 
     const SCRIPT_VERSION = "5.4";
-    const UPDATE_URL = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/script.user.js";
+    const UPDATE_URL = "https://raw.githubusercontent.com/Iascripts71/Scripts/main/script.user.js";
 
     // 1. Estilos CSS
     const inyectarCSS = () => {
