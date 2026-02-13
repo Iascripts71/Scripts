@@ -27,7 +27,6 @@
         return `${subforo}-${idLista}-${fecha}_${hora}.csv`;
     };
 
-    // Panel de Información (Estilo unificado con el otro script)
     const mostrarInfoCloud = () => {
         const infoDiv = document.createElement('div');
         infoDiv.style = "position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); background: #1a1a1a; color: white; padding: 25px; z-index: 30000; border-radius: 15px; border: 2px solid #0050ff; width: 320px; font-family: sans-serif; text-align: left; box-shadow: 0 0 20px rgba(0,80,255,0.5);";
@@ -56,7 +55,7 @@
         panel.innerHTML = `
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 style="margin:0; color:#0050ff;">☁️ Mi Nube CRG v0.2</h3>
-                <button id="btn-info-cloud" style="background:#1a1a1a; color:#0050ff; border:1px solid #0050ff; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; font-size:16px; display:flex; align-items:center; justify-content:center; transition:0.3s;">ℹ️</button>
+                <button id="btn-info-cloud" style="background:#1a1a1a; color:#0050ff; border:1px solid #0050ff; border-radius:50%; width:30px; height:30px; cursor:pointer; font-weight:bold; font-size:16px; display:flex; align-items:center; justify-content:center;">ℹ️</button>
             </div>
             
             <div style="margin-bottom:10px;">
@@ -86,7 +85,6 @@
 
         document.getElementById('btn-info-cloud').onclick = mostrarInfoCloud;
         
-        // Acciones de los botones
         document.getElementById('btn-up').onclick = () => {
             const user = document.getElementById('cloud-user').value;
             const pass = document.getElementById('cloud-pass').value;
