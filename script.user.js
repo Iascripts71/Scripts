@@ -6,7 +6,7 @@
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @grant        GM_xmlhttpRequest
-// @version      5.4
+// @version      5.5
 // @author       Iascripts71
 // @description  Panel con leyenda personalizable, colores y parpadeo. Con sistema de actualización opcional.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/script.user.js
@@ -16,7 +16,7 @@
 (function() {
     'use strict';
 
-    const SCRIPT_VERSION = "5.4";
+    const SCRIPT_VERSION = "5.5";
     const UPDATE_URL = "https://raw.githubusercontent.com/Iascripts71/Scripts/main/script.user.js";
 
     // 1. Estilos CSS
@@ -172,5 +172,6 @@
     setTimeout(aplicarEstilos, 600);
     const observer = new MutationObserver(aplicarEstilos);
     observer.observe(document.body, { childList: true, subtree: true });
+
 
 })();
