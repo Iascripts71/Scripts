@@ -6,9 +6,9 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @version      0.16
+// @version      0.17
 // @author       Iascripts71
-// @description  Backup en Dropbox compatible con tokens de larga duración.
+// @description  Backup en Dropbox con depuración de errores.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // @downloadURL  https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // ==/UserScript==
@@ -24,8 +24,6 @@
             font-family: sans-serif; text-align: left; box-shadow: 0 0 25px rgba(0,80,255,0.6);
         }
         .crg-info-modal h4 { margin:0 0 10px 0; color:#0050ff; border-bottom: 1px solid #333; padding-bottom:10px; }
-        .crg-info-modal p { font-size:13px; line-height: 1.5; }
-        .crg-info-modal b { color: #0050ff; }
         .db-help-step { background:#222; border-left: 3px solid #0050ff; padding:8px; margin:10px 0; font-size:12px; }
         
         #crg-btn-info {
@@ -52,7 +50,7 @@
                 <textarea id="db-token" style="width:100%; height:80px; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box; font-size:10px; font-family:monospace; resize:none;">${GM_getValue('db_token', '')}</textarea>
             </div>
 
-            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 SUBIR BACKUP (20MB+)</button>
+            <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 SUBIR BACKUP</button>
             <button id="btn-down" style="width:100%; background:#007bff; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold;">📥 DESCARGAR BACKUP</button>
             
             <div id="cloud-msg" style="margin-top:15px; font-size:12px; text-align:center; font-weight:bold; min-height:15px;"></div>
@@ -65,16 +63,13 @@
             const info = document.createElement('div');
             info.className = 'crg-info-modal';
             info.innerHTML = `
-                <h4>Guía para el Token</h4>
-                <p>Dropbox da error si el token no tiene permisos configurados.</p>
+                <h4>Solución al Error</h4>
+                <p>Si te da error de permisos tras configurarlo:</p>
                 <div class="db-help-step">
-                    1. En la web de Dropbox, ve a <b>Permissions</b> y activa <b>files.content.write</b>. Pulsa <b>Submit</b>.
+                    1. Ve a <b>Permissions</b>, marca las casillas y pulsa <b>SUBMIT</b>.
                 </div>
                 <div class="db-help-step">
-                    2. En <b>Settings</b>, pon <b>Access token expiration</b> en <b>No expiration</b>.
-                </div>
-                <div class="db-help-step">
-                    3. Pulsa el botón <b>Generate</b>. Copia ese código (aunque sea muy largo) y pégalo aquí.
+                    2. Vuelve a <b>Settings</b> y genera un <b>TOKEN NUEVO</b>. El antiguo ya no sirve tras cambiar permisos.
                 </div>
                 <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:10px; border-radius:5px; cursor:pointer; margin-top:15px; font-weight:bold;">ENTENDIDO</button>
             `;
@@ -82,10 +77,9 @@
             document.getElementById('crg-info-close').onclick = () => info.remove();
         };
 
-        // ACCIÓN: SUBIR
         document.getElementById('btn-up').onclick = () => {
             const token = document.getElementById('db-token').value.trim();
-            if(!token) return alert("Pega el token primero.");
+            if(!token) return alert("Pega el token.");
             GM_setValue('db_token', token);
             
             let datos = {};
@@ -94,7 +88,7 @@
                 if (k.startsWith('lm_') || k.includes('status')) datos[k] = localStorage.getItem(k);
             }
 
-            document.getElementById('cloud-msg').innerText = "Conectando con Dropbox...";
+            document.getElementById('cloud-msg').innerText = "Subiendo...";
             GM_xmlhttpRequest({
                 method: "POST",
                 url: "https://content.dropboxapi.com/2/files/upload",
@@ -109,19 +103,17 @@
                         document.getElementById('cloud-msg').innerText = "✅ ¡Backup guardado!";
                         document.getElementById('cloud-msg').style.color = "green";
                     } else {
-                        document.getElementById('cloud-msg').innerText = "❌ Error de permisos o Token";
+                        const errorMsg = JSON.parse(r.responseText);
+                        console.error("DETALLE ERROR DROPBOX:", errorMsg);
+                        document.getElementById('cloud-msg').innerText = "❌ Error: " + (errorMsg.error_summary || "Token inválido");
                         document.getElementById('cloud-msg').style.color = "red";
-                        console.error("Respuesta Dropbox:", r.responseText);
                     }
                 }
             });
         };
 
-        // ACCIÓN: DESCARGAR
         document.getElementById('btn-down').onclick = () => {
             const token = document.getElementById('db-token').value.trim();
-            if(!token) return alert("Pega el token.");
-            document.getElementById('cloud-msg').innerText = "Descargando...";
             GM_xmlhttpRequest({
                 method: "POST",
                 url: "https://content.dropboxapi.com/2/files/download",
@@ -130,10 +122,9 @@
                     if(r.status === 200) {
                         const d = JSON.parse(r.responseText);
                         Object.keys(d).forEach(k => localStorage.setItem(k, d[k]));
-                        alert("✅ Datos recuperados. Recargando página...");
-                        location.reload();
+                        alert("✅ Datos recuperados."); location.reload();
                     } else {
-                        alert("❌ No se encontró el archivo. ¿Has subido alguno antes?");
+                        alert("❌ Error: " + r.status);
                     }
                 }
             });
