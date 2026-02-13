@@ -6,9 +6,9 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_addStyle
-// @version      0.6
+// @version      0.10
 // @author       Iascripts71
-// @description  Copia de seguridad remota con el diseño EXACTO del gestor de colección.
+// @description  Backup gratuito permanente con diseño idéntico al gestor de colección.
 // @updateURL    https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // @downloadURL  https://raw.githubusercontent.com/Iascripts71/Scripts/main/crg-backup-nube.user.js
 // ==/UserScript==
@@ -16,7 +16,7 @@
 (function() {
     'use strict';
 
-    // Inyectamos los estilos exactos del otro script para que la clase modal funcione
+    // ESTILOS CLONADOS EXACTAMENTE
     GM_addStyle(`
         .crg-info-modal {
             position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0);
@@ -24,21 +24,17 @@
             border-radius: 15px; border: 2px solid #0050ff; width: 320px;
             font-family: sans-serif; text-align: left; box-shadow: 0 0 20px rgba(0,80,255,0.5);
         }
-        .crg-info-modal ul { font-size: 13px; padding-left: 20px; color: #ccc; margin: 10px 0; }
-        .crg-info-modal li { margin-bottom: 5px; }
+        .crg-info-modal h4 { margin-top:0; color:#0050ff; }
+        .crg-info-modal p { font-size:13px; line-height:1.5; }
+        .crg-info-modal ul { font-size: 12px; padding-left: 20px; color: #ccc; }
+        
+        #crg-btn-info {
+            background: #1a1a1a; color: #0050ff !important; border: 2px solid #0050ff;
+            border-radius: 50%; width: 30px; height: 30px; cursor: pointer;
+            font-weight: bold; font-size: 16px; display: flex;
+            align-items: center; justify-content: center;
+        }
     `);
-
-    const generarNombreArchivo = () => {
-        let subforo = "crg-lista", idLista = "00000";
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('t')) idLista = urlParams.get('t');
-        const breadcrumb = document.querySelector('.nav-links, .nav-links span:last-child');
-        if (breadcrumb) subforo = breadcrumb.innerText.toLowerCase().replace(/[^a-z0-9]/g, '-').split('--')[0];
-        const ahora = new Date();
-        const fecha = ahora.toISOString().split('T')[0];
-        const hora = ahora.getHours().toString().padStart(2, '0') + '-' + ahora.getMinutes().toString().padStart(2, '0') + '-' + ahora.getSeconds().toString().padStart(2, '0');
-        return `${subforo}-${idLista}-${fecha}_${hora}.csv`;
-    };
 
     const showCloudPanel = () => {
         if (document.getElementById('cloud-panel-crg')) return;
@@ -49,20 +45,12 @@
         panel.innerHTML = `
             <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="margin:0; color:#0050ff;">☁️ Mi Nube CRG</h3>
-                <button id="crg-btn-info" style="background: #1a1a1a; color: #0050ff; border: 2px solid #0050ff; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; font-weight: bold; font-size: 16px; display: flex; align-items: center; justify-content: center;">ℹ️</button>
+                <button id="crg-btn-info">ℹ️</button>
             </div>
             
-            <div style="margin-bottom:10px;">
-                <label style="font-size:11px; font-weight:bold;">KVSTORE USER (Store Name):</label>
-                <input type="text" id="cloud-user" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_user', '')}">
-            </div>
             <div style="margin-bottom:15px;">
-                <label style="font-size:11px; font-weight:bold;">API KEY (Contraseña):</label>
-                <input type="password" id="cloud-pass" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('cloud_pass', '')}">
-            </div>
-            
-            <div style="background:#e9ecef; padding:10px; border-radius:8px; margin-bottom:15px; font-size:10px; border: 1px dashed #adb5bd;">
-                <b>Archivo generado:</b><br><span style="color:#0050ff;">${generarNombreArchivo()}</span>
+                <label style="font-size:11px; font-weight:bold;">PANTRY ID (API Key):</label>
+                <input type="text" id="pantry-id" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ccc; box-sizing: border-box;" value="${GM_getValue('pantry_id', '')}" placeholder="Copia aquí tu ID de Pantry">
             </div>
 
             <button id="btn-up" style="width:100%; background:#28a745; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-weight:bold; margin-bottom:10px;">📤 GUARDAR EN LA NUBE</button>
@@ -71,25 +59,25 @@
             <div id="cloud-msg" style="margin-top:15px; font-size:12px; text-align:center; font-weight:bold; min-height:15px;"></div>
             
             <div style="text-align:center; margin-top:15px; border-top: 1px solid #ddd; padding-top: 10px;">
-                <a href="https://www.kvstore.io/signup" target="_blank" style="font-size:12px; color:#0050ff; text-decoration:none; font-weight:bold;">👉 Crear cuenta en KVstore.io</a>
+                <a href="https://getpantry.cloud/" target="_blank" style="font-size:12px; color:#0050ff; text-decoration:none; font-weight:bold;">👉 Crear cuenta gratuita en Pantry</a>
             </div>
             <p id="cloud-close" style="text-align:center; margin-top:10px; color:#888; cursor:pointer; font-size:12px; margin-bottom:0;">Cerrar ventana</p>
         `;
         document.body.appendChild(panel);
 
-        // Lógica del botón Información (BASADA EN TU CÓDIGO)
+        // Lógica del botón Información (IDÉNTICA A LA PEDIDA)
         document.getElementById('crg-btn-info').onclick = () => {
             const info = document.createElement('div');
             info.className = 'crg-info-modal';
             info.innerHTML = `
                 <h4 style="margin-top:0; color:#0050ff;">¿Cómo funciona la nube?</h4>
-                <p>Este script permite guardar tus colores y notas para no perderlos si borras el historial o cambias de PC.</p>
+                <p>Usa <b>Pantry Cloud</b> para guardar tus marcas de forma gratuita y permanente (sin caducidad).</p>
                 <ul>
-                    <li><b>KVstore:</b> Almacenamiento gratuito para tus datos.</li>
-                    <li><b>Guardar:</b> Sube tus marcas actuales a internet.</li>
-                    <li><b>Recuperar:</b> Descarga tus marcas guardadas en este PC.</li>
+                    <li><b>Pantry ID:</b> Es el código que recibes al crear tu cuenta.</li>
+                    <li><b>Guardar:</b> Sube tus colores y notas actuales a la nube.</li>
+                    <li><b>Recuperar:</b> Descarga tu última copia en este ordenador.</li>
                 </ul>
-                <p style="font-size:11px; color:#888;">Crea tu cuenta gratis en el enlace del panel principal.</p>
+                <p style="font-size:11px; color:#888;">Los cambios se aplican al recargar la página del foro.</p>
                 <button id="crg-info-close" style="width:100%; background:#0050ff; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; margin-top:10px;">Entendido</button>
             `;
             document.body.appendChild(info);
@@ -97,10 +85,9 @@
         };
 
         document.getElementById('btn-up').onclick = () => {
-            const user = document.getElementById('cloud-user').value;
-            const pass = document.getElementById('cloud-pass').value;
-            if(!user || !pass) return alert("Por favor, rellena los datos.");
-            GM_setValue('cloud_user', user); GM_setValue('cloud_pass', pass);
+            const id = document.getElementById('pantry-id').value;
+            if(!id) return alert("Por favor, introduce tu Pantry ID.");
+            GM_setValue('pantry_id', id);
             
             let datos = {};
             for (let i = 0; i < localStorage.length; i++) {
@@ -111,29 +98,33 @@
             document.getElementById('cloud-msg').innerText = "Subiendo...";
             GM_xmlhttpRequest({
                 method: "POST",
-                url: `https://api.kvstore.io/collections/${user}/items/backup_actual`,
-                headers: { "kvstore-io-api-key": pass, "Content-Type": "application/json" },
-                data: JSON.stringify({ value: JSON.stringify(datos) }),
+                url: `https://getpantry.cloud/apiv1/pantry/${id}/basket/crg_backup`,
+                headers: { "Content-Type": "application/json" },
+                data: JSON.stringify(datos),
                 onload: (r) => {
-                    document.getElementById('cloud-msg').innerText = (r.status === 201 || r.status === 200) ? "✅ ¡Copia guardada!" : "❌ Error de credenciales";
-                    document.getElementById('cloud-msg').style.color = (r.status === 201 || r.status === 200) ? "green" : "red";
+                    document.getElementById('cloud-msg').innerText = (r.status === 200) ? "✅ ¡Copia guardada con éxito!" : "❌ Error en el ID";
+                    document.getElementById('cloud-msg').style.color = (r.status === 200) ? "green" : "red";
                 }
             });
         };
 
         document.getElementById('btn-down').onclick = () => {
-            const user = document.getElementById('cloud-user').value, pass = document.getElementById('cloud-pass').value;
+            const id = document.getElementById('pantry-id').value;
+            if(!id) return alert("Introduce tu Pantry ID.");
+            document.getElementById('cloud-msg').innerText = "Recuperando...";
             GM_xmlhttpRequest({
                 method: "GET",
-                url: `https://api.kvstore.io/collections/${user}/items/backup_actual`,
-                headers: { "kvstore-io-api-key": pass },
+                url: `https://getpantry.cloud/apiv1/pantry/${id}/basket/crg_backup`,
                 onload: (r) => {
                     if(r.status === 200) {
-                        const d = JSON.parse(JSON.parse(r.responseText).value);
+                        const d = JSON.parse(r.responseText);
                         Object.keys(d).forEach(k => localStorage.setItem(k, d[k]));
-                        alert("✅ Restaurado. Se recargará la página.");
+                        alert("✅ Restaurado con éxito. Se recargará la página.");
                         location.reload();
-                    } else alert("❌ No se encontró copia.");
+                    } else {
+                        document.getElementById('cloud-msg').innerText = "❌ No hay copia o ID mal.";
+                        document.getElementById('cloud-msg').style.color = "red";
+                    }
                 }
             });
         };
